@@ -1,33 +1,50 @@
-solution.py
-`python
-#!/usr/bin/env python3
-# solution.py — Lab-7 (API, using OpenWeatherMap as example)
-import os, sys, requests
+# solution.py
 
-def get_weather(city):
-    key = os.environ.get('OWM_API_KEY')
-    if not key:
-        print("Set OWM_API_KEY environment variable.")
-        return
-    url = f"https://api.openweathermap.org/data/2.5/weather"
-    params = {'q': city, 'appid': key, 'units': 'metric', 'lang':'ru'}
-    r = requests.get(url, params=params, timeout=10)
-    r.raise_for_status()
-    j = r.json()
-    out = {
-        'city': j.get('name'),
-        'weather': j['weather'][0]['description'],
-        'temp': j['main']['temp'],
-        'pressure': j['main']['pressure'],
-        'humidity': j['main']['humidity']
-    }
-    return out
+import requests
+from tkinter import Tk, Button, Label
+from PIL import Image, ImageTk
+from io import BytesIO
 
-if name == 'main':
-    city = sys.argv[1] if len(sys.argv)>1 else 'Saint Petersburg'
-    try:
-        w = get_weather(city)
-        if w:
-            print(f"{w['city']}: {w['weather']}, {w['temp']}°C, {w['humidity']}% humidity, {w['pressure']} hPa")
-    except Exception as e:
-        print("Error:", e)
+def weather():
+    print("=== Task 1: Погода ===")
+    city_name = "Moscow"
+    api_key = "YOUR_API_KEY"
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Погода в {city_name}:")
+        print("Температура:", data['main']['temp'], "°C")
+        print("Влажность:", data['main']['humidity'], "%")
+        print("Давление:", data['main']['pressure'], "hPa")
+        print("Состояние:", data['weather'][0]['description'])
+        print("Скорость ветра:", data['wind']['speed'], "м/с")
+    else:
+        print("Ошибка API:", response.status_code)
+
+
+def fox_generator():
+    print("=== Доп. задание: генератор картинок ===")
+
+    def change_image():
+        response = requests.get("https://randomfox.ca/floof/")
+        img_url = response.json()['image']
+        img_response = requests.get(img_url)
+        img_data = Image.open(BytesIO(img_response.content))
+        img_tk = ImageTk.PhotoImage(img_data)
+        label.config(image=img_tk)
+        label.image = img_tk
+
+    root = Tk()
+    root.title("Random Fox Generator")
+    label = Label(root)
+    label.pack()
+    btn = Button(root, text="Следующая картинка", command=change_image)
+    btn.pack()
+    change_image()
+    root.mainloop()
+
+if name == "main":
+    weather()
+    fox_generator()
